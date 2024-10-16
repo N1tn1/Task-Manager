@@ -1,0 +1,38 @@
+.ListItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    color: #461717;
+    font-weight: 1000;
+    font-size: 1.2em;
+}
+.priority{
+    padding-top: -5px;
+}
+.rmvbtn{
+    background-color: #ea9898;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.rmvbtn:hover {
+    background-color: #ff1a1a;
+}
+
+.editbtn{
+    background-color: #7aa37f;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.editbtn:hover {
+    background-color: #0c4318;
+}
+
