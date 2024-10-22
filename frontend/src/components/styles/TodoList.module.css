@@ -1,0 +1,36 @@
+.todoContainer {
+    display: flex;
+    justify-content: center; 
+    align-items: flex-start; 
+    flex-wrap: wrap; 
+    gap: 50px; 
+    margin: 20px;
+}
+
+.addtodoForm {
+    margin-bottom: 20px;
+}
+.tasksContainer {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+.activeTasks,
+.completedTasks {
+    flex: 1;
+    min-width: 550px;
+    max-width: 400px;
+}
+
+.todoList {
+    list-style-type: none; 
+    padding: 0;
+}
+
+.no-activeTasks {
+    display: flex;
+    justify-content: center; 
+    align-items: center; 
+    height: 100%; 
+    flex-direction: column; 
+}
