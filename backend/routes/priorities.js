@@ -1,26 +1,9 @@
 const express = require('express');
-const Priority = require('../models/Priority');
+const { getPriorityById, getPriorities, createPriority, updatePriority, deletePriority } = require('../controllers/priorities.js');
+const auth = require('../middlewares/auth');
 const router = express.Router();
 
-router.post('/', async (req, res) => {
-  const { name, level } = req.body;
-
-  try {
-    const priority = new Priority({ name, level });
-    await priority.save();
-    res.status(201).json(priority);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-router.get('/', async (req, res) => {
-  try {
-    const priorities = await Priority.find();
-    res.status(200).json(priorities);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+router.route('/').post(auth, createPriority).get(auth, getPriorities);
+router.route('/:id').get(auth, getPriorityById).put(auth, updatePriority).delete(auth, deletePriority);
 
 module.exports = router;

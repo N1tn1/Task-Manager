@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import AddTodoForm from './AddTodoForm'; 
-import TodoList from './TodoList'; 
+import AddTodoForm from './AddTodoForm';
+import TodoList from './TodoList';
 import style from './styles/TodoContainer.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboard, faSearch, faAngleLeft, faAngleRight } from '@fortawesome/free-solid-svg-icons';
@@ -12,67 +12,108 @@ const TodoContainer = () => {
     const [priorities, setPriorities] = useState([]);
     const [error, setError] = useState(null);
     const [search, setSearch] = useState('');
-    const [sortBy, setSortBy] = useState('createdAt'); 
+    const [sortBy, setSortBy] = useState('createdAt');
     const [page, setPage] = useState(1);
     const [limit] = useState(5);
-    const [loading, setLoading] = useState(false); 
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchTodos = async () => {
-            const token = localStorage.getItem('token');
-            setLoading(true);
-            setError(null);
-            try {
-                const response = await axios.get('http://localhost:3000/api/todos', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    params: { search, sortBy, page, limit }
-                });
-                console.log(response.data.todos);
-                setTodos(response.data.todos);
-            } catch (err) {
-                if (err.response && err.response.status === 401) {
-                    setError('Session expired. Please sign in again.');
-                } else {
-                    setError('Failed to fetch tasks');
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchTodos = async () => {
+        const token = localStorage.getItem('token');
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await axios.get('http://localhost:3000/api/todos', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                params: { search, sortBy, page, limit }
+            });
     
-        fetchTodos();
-    }, [search, sortBy, page, limit]);
-
-    // Fetch priorities
-    useEffect(() => {
-        const fetchPriorities = async () => {
-            try {
-                const response = await axios.get('http://localhost:3000/api/priorities');
-                setPriorities(response.data); 
-            } catch (error) {
-                console.error('Error fetching priorities:', error);
+            const todosWithPriority = response.data.todos.map(todo => {
+                const priority = typeof todo.priority === 'object' ? todo.priority : 
+                    priorities.find(p => p._id === todo.priorityId) || null; 
+    
+                return {
+                    ...todo,
+                    priority: priority ? {
+                        _id: priority._id,
+                        name: priority.name,
+                       level: priority.level,
+                    } : { _id: null, name: 'No Priority'}
+                };
+            });
+    
+            setTodos(todosWithPriority);
+        } catch (err) {
+            if (err.response && err.response.status === 401) {
+                setError('Session expired. Please sign in again.');
+            } else {
+                setError('Failed to fetch tasks');
             }
-        };
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        fetchPriorities();
-    }, []); 
+    const [isPrioritiesLoaded, setIsPrioritiesLoaded] = useState(false);
+
+const fetchPriorities = async () => {
+    const token = localStorage.getItem('token');
+    try {
+        const response = await axios.get('http://localhost:3000/api/priorities', {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        setPriorities(response.data.priorities);
+        setIsPrioritiesLoaded(true); 
+    } catch (error) {
+        console.error('Error fetching priorities:', error);
+    }
+};
+
+    
+
+    const handleSearchChange = (event) => {
+        setSearch(event.target.value);
+        setPage(1);
+    };
+    
+    useEffect(() => {
+        const fetchAllData = async () => {
+            await fetchPriorities();
+            await fetchTodos();
+        };
+        fetchAllData();
+    }, [search, sortBy, page]);
 
     const handleSignIn = () => {
         navigate('/signin');
     };
 
     const addTodo = async (newTodo) => {
+        if (!isPrioritiesLoaded) {
+            return;
+        }
+    
         const token = localStorage.getItem('token');
         try {
             const response = await axios.post('http://localhost:3000/api/todos', newTodo, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`
                 }
             });
-            setTodos(prevTodos => [...prevTodos, response.data]);
+    
+            const addedTodo = { 
+                ...response.data, 
+                priority: priorities.find(p => p._id === response.data.priorityId) ,
+        };
+     setTodos(prevTodos => {
+        
+        if (!prevTodos.find(todo => todo._id === addedTodo._id)) {
+            return [...prevTodos, addedTodo];
+        }
+        return prevTodos; 
+    });
         } catch (err) {
             setError('Failed to add task');
             console.error('Failed to add task:', err);
@@ -87,14 +128,11 @@ const TodoContainer = () => {
                 ...todo,
                 isCompleted: !todo.isCompleted
             }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { Authorization: `Bearer ${token}` }
             });
             setTodos(prevTodos => prevTodos.map(todo => (todo._id === id ? response.data : todo)));
         } catch (err) {
-            setError('Failed to toggle todo');
-            console.error('Failed to toggle todo:', err);
+            handleApiError(err);
         }
     };
 
@@ -102,14 +140,17 @@ const TodoContainer = () => {
         const token = localStorage.getItem('token');
         try {
             await axios.delete(`http://localhost:3000/api/todos/${id}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { Authorization: `Bearer ${token}` }
             });
-            setTodos(prevTodos => prevTodos.filter(todo => todo._id !== id));
+            const updatedTodos = todos.filter(todo => todo._id !== id);
+            setTodos(updatedTodos);
+    
+           
+            if (updatedTodos.length === 0 && page > 1) {
+                setPage(1); 
+            }
         } catch (err) {
-            setError('Failed to delete task');
-            console.error('Failed to delete task:', err);
+            handleApiError(err);
         }
     };
 
@@ -121,20 +162,12 @@ const TodoContainer = () => {
                 ...todo,
                 title: newTitle
             }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { Authorization: `Bearer ${token}` }
             });
             setTodos(prevTodos => prevTodos.map(todo => (todo._id === id ? response.data : todo)));
         } catch (err) {
-            setError('Failed to edit task');
-            console.error('Failed to edit task:', err);
+            handleApiError(err);
         }
-    };
-
-    const handleSearchChange = (event) => {
-        setSearch(event.target.value);
-        setPage(1);
     };
 
     const handleSortChange = (event) => {
@@ -143,6 +176,7 @@ const TodoContainer = () => {
     };
 
     const handlePageChange = (newPage) => {
+        if (newPage < 1) return;
         setPage(newPage);
     };
 
@@ -160,20 +194,20 @@ const TodoContainer = () => {
     return (
         <div className={style.todoContainer}>
             <div className={style.searchContainer}>
-                <input 
+                <input
                     className={style.input}
-                    type="text" 
-                    placeholder="Search..." 
+                    type="text"
+                    placeholder="Search..."
                     value={search}
-                    onChange={handleSearchChange} 
+                    onChange={handleSearchChange}
                 />
                 <FontAwesomeIcon icon={faSearch} className={style.icon} />
             </div>
-            <h1 style={{color: '#5f1308'}}> <FontAwesomeIcon icon={faClipboard} /> Tasks </h1>
-            <AddTodoForm onAddTodo={addTodo} />
-            
+            <h1 style={{ color: '#5f1308' }}>
+                <FontAwesomeIcon icon={faClipboard} /> Tasks
+            </h1>
+            <AddTodoForm onAddTodo={addTodo} priorities={priorities} />
             {error && renderError()}
-    
             {todos.length > 0 ? (
                 <>
                     <select className={style.sortinput} onChange={handleSortChange} value={sortBy}>
@@ -188,17 +222,17 @@ const TodoContainer = () => {
                         priorities={priorities}
                     />
                     <div className={style.pagination}>
-                        <button 
+                        <button
                             className={style.pagebtn}
-                            onClick={() => handlePageChange(page - 1)} 
+                            onClick={() => handlePageChange(page - 1)}
                             disabled={page === 1}
                         >
                             <FontAwesomeIcon icon={faAngleLeft} />
                         </button>
                         <span>Page {page}</span>
-                        <button 
+                        <button
                             className={style.pagebtn}
-                            onClick={() => handlePageChange(page + 1)} 
+                            onClick={() => handlePageChange(page + 1)}
                             disabled={todos.length < limit}
                         >
                             <FontAwesomeIcon icon={faAngleRight} />

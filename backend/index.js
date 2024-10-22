@@ -1,5 +1,5 @@
-require('dotenv').config();
 
+const seedPriorities = require('./seeder/seedPriorities');require('dotenv').config();
 const cors = require('cors')
 
 // Swagger
@@ -47,6 +47,9 @@ const start = async () => {
     try {
         checkEnvVariables();
         await connectDB(process.env.MONGO_URI);
+        await seedPriorities();
+        console.log('Database connected and seeded!');
+        
         app.listen(PORT, () =>
             console.log(`Server is listening on port ${PORT}...`)
         );

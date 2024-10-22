@@ -1,8 +1,5 @@
 const mongoose = require('mongoose');
-const connectDB = require('../db/connect');
 const Priority = require('../models/Priority');
-require('dotenv').config();
-
 
 const seedPriorities = async () => {
     const priorities = ['low', 'medium', 'high'];
@@ -18,13 +15,4 @@ const seedPriorities = async () => {
     console.log('Priorities seeded!');
 };
 
-const start = async () => {
-    await connectDB(process.env.MONGO_URI);
-    await seedPriorities();
-    mongoose.disconnect();
-};
-
-start().catch(err => {
-    console.error(err);
-    mongoose.disconnect();
-});
+module.exports = seedPriorities;
