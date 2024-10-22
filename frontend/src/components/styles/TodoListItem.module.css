@@ -3,6 +3,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px;
+    border: 1px solid #ccc;
     color: #461717;
     font-weight: 1000;
     font-size: 1.2em;
@@ -36,3 +37,36 @@
     background-color: #0c4318;
 }
 
+.todoContent {
+    display: flex;
+    align-items: center;
+    flex: 1; 
+}
+
+.todoTitle {
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.editInput {
+    margin-left: 10px;
+    padding: 5px;
+}
+
+.buttonColumn {
+    display: flex;
+    gap: 10px; 
+}
+
+button {
+    padding: 5px 10px;
+    background-color: #007bff; 
+    color: white; 
+    border: none;
+    border-radius: 3px;
+    cursor: pointer; 
+}
+
+button:hover {
+    background-color: #0056b3; 
+}

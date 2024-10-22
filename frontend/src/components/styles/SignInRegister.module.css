@@ -50,3 +50,7 @@
 .btnreg:hover {
     background-color: #0056b3;
 }
+
+.success {
+    margin-top: 150px;
+}

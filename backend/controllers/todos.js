@@ -28,6 +28,20 @@ exports.createTodo = [
   }
 ]
 
+exports.getTodoById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const todo = await Todo.findOne({ _id: id, user: req.user._id });
+    if (!todo) {
+      return res.status(404).json({ msg: 'Task not found' });
+    }
+    res.status(200).json({ todo });
+  } catch (error) {
+    console.error('Error fetching todo:', error);
+    next(error);
+  }
+}
+
 exports.getTodos = async (req, res, next) => {
     const { search, sortBy, page = 1, limit = 5 } = req.query;
     const skip = (page - 1) * limit;
